@@ -7,12 +7,13 @@ const char *password = "gna730gj0q368539fh638";
 const int LED_BUILTIN = 2;
 
 const String DEVICE_SECRET = "aca9d58d-a839-49ab-8977-6b5d62257998";
+const String SECTER_HEADER_NAME = "secret";
 WebServer server(80);
 
 void openDoor() {
   String sentSecret;
-  if (server.hasHeader("secret")) {
-    sentSecret = server.header("secret");
+  if (server.hasHeader(SECTER_HEADER_NAME)) {
+    sentSecret = server.header(SECTER_HEADER_NAME);
   }
 
   if (DEVICE_SECRET == sentSecret) {
