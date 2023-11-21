@@ -6,14 +6,24 @@ const char *password = "gna730gj0q368539fh638";
 
 const int LED_BUILTIN = 2;
 
+const String DEVICE_SECRET = "aca9d58d-a839-49ab-8977-6b5d62257998";
 WebServer server(80);
 
 void openDoor() {
-  server.send(200, "text/text", "Opening door\n");
-  Serial.println("Opening Door\n");
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(3000);
-  digitalWrite(LED_BUILTIN, LOW);
+  String sentSecret;
+  if (server.hasHeader("secret")) {
+    sentSecret = server.header("secret");
+  }
+
+  if (DEVICE_SECRET == sentSecret) {
+    server.send(200, "text/text", "Opening door\n");
+    Serial.println("Opening Door\n");
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(3000);
+    digitalWrite(LED_BUILTIN, LOW);
+  } else {
+    server.send(403, "text/test", "You shall not pass");
+  }
 }
 
 void setup_routing() {
