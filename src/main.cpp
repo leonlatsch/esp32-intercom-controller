@@ -1,65 +1,73 @@
 #include <WiFi.h>
 #include <WebServer.h>
 
-const char *ssid = "E-CORB";
-const char *password = "gna730gj0q368539fh638";
+const char *SSID = "E-CORB";
+const char *PASSWORD = "gna730gj0q368539fh638";
 
 const int LED_BUILTIN = 2;
 
-const String DEVICE_SECRET = "aca9d58d-a839-49ab-8977-6b5d62257998";
-const String SECTER_HEADER_NAME = "secret";
+String DEVICE_SECRET = "aca9d58d-a839-49ab-8977-6b5d62257998";
+const char* SECTER_HEADER_NAME = "secret";
+const char* EXPECTED_HEADERS[] = { "secret" };
+
 WebServer server(80);
 
 void openDoor() {
-  String sentSecret;
-  if (server.hasHeader(SECTER_HEADER_NAME)) {
-    sentSecret = server.header(SECTER_HEADER_NAME);
-  }
-
-  if (DEVICE_SECRET == sentSecret) {
-    server.send(200, "text/text", "Opening door\n");
     Serial.println("Opening Door\n");
     digitalWrite(LED_BUILTIN, HIGH);
     delay(3000);
     digitalWrite(LED_BUILTIN, LOW);
-  } else {
-    server.send(403, "text/test", "You shall not pass");
-  }
+}
+
+void handleOpenDoor() {
+    String sentSecret = server.header(SECTER_HEADER_NAME);
+
+    if (DEVICE_SECRET == sentSecret) {
+        server.send(200, "text/text", "Opening door\n");
+        openDoor();
+    } else {
+        server.send(403, "text/test", "You shall not pass");
+    }
 }
 
 void setup_routing() {
-  server.on("/opendoor", openDoor);
+    server.on("/opendoor", handleOpenDoor);
 
-  server.begin();
+    server.collectHeaders(EXPECTED_HEADERS, sizeof(EXPECTED_HEADERS));
+    server.begin();
 }
 
 void setup_wifi() {
-  Serial.begin(9600);
-  while (!Serial);
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(SSID, PASSWORD);
 
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(100);
+    }
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(100);
-  }
+    if (WiFi.isConnected()) {
+        Serial.print("Connected to ");
+        Serial.print(SSID);
+        Serial.print(" IP: ");
+        Serial.println(WiFi.localIP());
 
-  if (WiFi.isConnected()) {
-    Serial.println(WiFi.localIP());
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(5000);
-    digitalWrite(LED_BUILTIN, LOW);
-  }
+        digitalWrite(LED_BUILTIN, HIGH);
+        delay(5000);
+        digitalWrite(LED_BUILTIN, LOW);
+    }
 }
 
 void setup() {
-  pinMode(LED_BUILTIN, OUTPUT);
-  delay(1000);
+    Serial.begin(9600);
+    while (!Serial);
+    Serial.println("");
+    pinMode(LED_BUILTIN, OUTPUT);
+    delay(1000);
 
-  setup_wifi();
-  setup_routing();
+    setup_wifi();
+    setup_routing();
 }
 
 void loop(){
-  server.handleClient();
+    server.handleClient();
 }
