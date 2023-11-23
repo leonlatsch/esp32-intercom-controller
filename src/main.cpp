@@ -5,12 +5,9 @@
 #include "uuid/uuid.h"
 #include "JsonHelper.h"
 #include "board_interaction.h"
-
-const char* EMPTY_STRING = "";
+#include "WiFiManager.h"
 
 const char *PREFS_NAMESPACE = "icc";
-const char *PREFS_KEY_SSID = "SSID";
-const char *PREFS_KEY_PASSWORD = "PASS";
 const char *PREFS_KEY_DEVICE_SECRET = "DSEC";
 Preferences prefs;
 
@@ -19,6 +16,9 @@ const char* EXPECTED_HEADERS[] = { "secret" };
 
 const int PORT = 80;
 WebServer server(PORT);
+
+WiFiManager wifiManager(prefs);
+
 String DEVICE_SECRET;
 
 /// BOARD INTERACTION
@@ -26,7 +26,7 @@ String DEVICE_SECRET;
 String getOrCreateDeviceSecret() {
     String existingSecret = prefs.getString(PREFS_KEY_DEVICE_SECRET);
 
-    if (existingSecret != EMPTY_STRING) {
+    if (!existingSecret.isEmpty()) {
         return existingSecret;
     }
 
@@ -122,54 +122,13 @@ void setup_ap_routing() {
     server.begin();
 }
 
-/// WIFI SETUP
-
-bool wifiConfigured() {
-    String ssid = prefs.getString(PREFS_KEY_SSID, EMPTY_STRING);
-    String pass = prefs.getString(PREFS_KEY_PASSWORD, EMPTY_STRING);
-
-    return ssid != EMPTY_STRING && pass != EMPTY_STRING;
-}
-
-void setup_wifi_sta() {
-    Serial.println("Starting in STA Mode");
-    String ssid = prefs.getString(PREFS_KEY_SSID, EMPTY_STRING);
-    String pass = prefs.getString(PREFS_KEY_PASSWORD, EMPTY_STRING);
-
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid, pass);
-
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(100);
-    }
-
-    if (WiFi.isConnected()) {
-        Serial.print(ssid);
-        Serial.print(" | ");
-        Serial.println(WiFi.localIP());
-
-        blink(2);
-    }
-}
-
-void setup_wifi_ap() {
-    Serial.println("Starting in AP Mode");
-    const char* ap_ssid = "ESP32 Intercom Controller";
-
-    WiFi.softAP(ap_ssid, NULL, 1, 0, 1);
-    Serial.print(ap_ssid);
-    Serial.print(" | ");
-    Serial.println(WiFi.softAPIP());
-    digitalWrite(LED_BLUE, HIGH);
-}
-
 /// GENERAL SETUP
 
 void setupBoard() {
     // Serial
     Serial.begin(9600);
     while (!Serial);
-    Serial.println(EMPTY_STRING);
+    Serial.println();
 
     // Pins
     pinMode(LED_BLUE, OUTPUT);
@@ -191,11 +150,11 @@ void setup() {
     setupBoard();
     setupPersistence();
 
-    if (wifiConfigured()) {
-        setup_wifi_sta();
+    if (wifiManager.wifi_creds_configures()) {
+        wifiManager.setup_wifi_sta();
         setup_sta_routing();
     } else {
-        setup_wifi_ap();
+        wifiManager.setup_wifi_ap();
         setup_ap_routing();
     }
 }
