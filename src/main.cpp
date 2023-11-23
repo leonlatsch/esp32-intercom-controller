@@ -5,33 +5,36 @@ const char *SSID = "E-CORB";
 const char *PASSWORD = "gna730gj0q368539fh638";
 
 const int LED_BLUE = 2;
+const char* EMPTY_STRING = "";
 
 String DEVICE_SECRET = "aca9d58d-a839-49ab-8977-6b5d62257998";
 const char* SECTER_HEADER_NAME = "secret";
 const char* EXPECTED_HEADERS[] = { "secret" };
 
-WebServer server(80);
+const int PORT = 80;
+WebServer server(PORT);
 
 void openDoor() {
-    Serial.println("Opening Door\n");
     digitalWrite(LED_BLUE, HIGH);
     delay(3000);
     digitalWrite(LED_BLUE, LOW);
 }
 
+const char* RESPONSE_CONTENT_TYPE = "*/*";
 void handleOpenDoor() {
     String sentSecret = server.header(SECTER_HEADER_NAME);
 
     if (DEVICE_SECRET == sentSecret) {
-        server.send(200, "text/text", "Opening door\n");
+        server.send(200, RESPONSE_CONTENT_TYPE, EMPTY_STRING);
         openDoor();
     } else {
-        server.send(403, "text/test", "You shall not pass");
+        server.send(403, RESPONSE_CONTENT_TYPE, EMPTY_STRING);
     }
 }
 
+const char* OPEN_DOOR_ROUTE = "/opendoor";
 void setup_routing() {
-    server.on("/opendoor", handleOpenDoor);
+    server.on(OPEN_DOOR_ROUTE, handleOpenDoor);
 
     server.collectHeaders(EXPECTED_HEADERS, sizeof(EXPECTED_HEADERS));
     server.begin();
@@ -46,13 +49,12 @@ void setup_wifi() {
     }
 
     if (WiFi.isConnected()) {
-        Serial.print("Connected to ");
         Serial.print(SSID);
-        Serial.print(" IP: ");
+        Serial.print(" | ");
         Serial.println(WiFi.localIP());
 
         digitalWrite(LED_BLUE, HIGH);
-        delay(5000);
+        delay(1000);
         digitalWrite(LED_BLUE, LOW);
     }
 }
@@ -60,9 +62,9 @@ void setup_wifi() {
 void setup() {
     Serial.begin(9600);
     while (!Serial);
-    Serial.println("");
+    Serial.println(EMPTY_STRING);
     pinMode(LED_BLUE, OUTPUT);
-    delay(1000);
+    delay(100);
 
     setup_wifi();
     setup_routing();
