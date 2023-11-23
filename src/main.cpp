@@ -1,5 +1,11 @@
 #include <WiFi.h>
 #include <WebServer.h>
+#include <Preferences.h>
+
+const char *PREFS_NAMESPACE = "icc";
+const char *PREFS_KEY_SSID = "SSID";
+const char *PREFS_KEY_PASSWORD = "PASS";
+Preferences prefs;
 
 const char *SSID = "E-CORB";
 const char *PASSWORD = "gna730gj0q368539fh638";
@@ -20,27 +26,62 @@ void openDoor() {
     digitalWrite(LED_BLUE, LOW);
 }
 
-const char* RESPONSE_CONTENT_TYPE = "*/*";
 void handleOpenDoor() {
     String sentSecret = server.header(SECTER_HEADER_NAME);
 
     if (DEVICE_SECRET == sentSecret) {
-        server.send(200, RESPONSE_CONTENT_TYPE, EMPTY_STRING);
+        server.send(200);
         openDoor();
     } else {
-        server.send(403, RESPONSE_CONTENT_TYPE, EMPTY_STRING);
+        server.send(403);
     }
 }
 
-const char* OPEN_DOOR_ROUTE = "/opendoor";
+void handleSetup() {
+    prefs.begin("icc");
+    prefs.putString("SSID", SSID);
+    prefs.putString("PASS", PASSWORD);
+    prefs.end();
+    server.send(200);
+}
+
+void handleWifiConfig() {
+    prefs.begin("icc");
+    String ssid = prefs.getString("SSID");
+    String pass = prefs.getString("PASS");
+    prefs.end();
+
+    server.send(200, "text/text", ssid + " | " + pass);
+}
+
+void handleReset() {
+    prefs.begin(PREFS_NAMESPACE, false);
+    prefs.clear();
+    prefs.end();
+    server.send(200);
+    ESP.restart();
+}
+
 void setup_routing() {
-    server.on(OPEN_DOOR_ROUTE, handleOpenDoor);
+    server.on("/setup", handleSetup);
+    server.on("/wificonfig", handleWifiConfig);
+    server.on("/opendoor", handleOpenDoor);
+    server.on("/reset", handleReset);
 
     server.collectHeaders(EXPECTED_HEADERS, sizeof(EXPECTED_HEADERS));
     server.begin();
 }
 
-void setup_wifi() {
+bool wifiConfigured() {
+    prefs.begin(PREFS_NAMESPACE, false);
+    String ssid = prefs.getString(PREFS_KEY_SSID, EMPTY_STRING);
+    String pass = prefs.getString(PREFS_KEY_PASSWORD, EMPTY_STRING);
+    prefs.end();
+
+    return ssid != EMPTY_STRING && pass != EMPTY_STRING;
+}
+
+void setup_wifi_sta() {
     WiFi.mode(WIFI_STA);
     WiFi.begin(SSID, PASSWORD);
 
@@ -59,15 +100,24 @@ void setup_wifi() {
     }
 }
 
-void setup() {
+void setupBoard() {
     Serial.begin(9600);
     while (!Serial);
     Serial.println(EMPTY_STRING);
     pinMode(LED_BLUE, OUTPUT);
     delay(100);
+}
 
-    setup_wifi();
+void setup() {
+    setupBoard();
+    setup_wifi_sta();
     setup_routing();
+
+    if (wifiConfigured()) {
+        Serial.println("WiFi configured, starting STA");
+    } else {
+        Serial.println("No WiFi configured, starting AP");
+    }
 }
 
 void loop(){
