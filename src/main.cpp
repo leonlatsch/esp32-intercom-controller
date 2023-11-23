@@ -4,8 +4,8 @@
 
 #include "uuid/uuid.h"
 #include "JsonHelper.h"
+#include "board_interaction.h"
 
-const int LED_BLUE = 2;
 const char* EMPTY_STRING = "";
 
 const char *PREFS_NAMESPACE = "icc";
@@ -22,21 +22,6 @@ WebServer server(PORT);
 String DEVICE_SECRET;
 
 /// BOARD INTERACTION
-
-void blink(int times) {
-    for (int i = 0; i < times; i++) {
-        digitalWrite(LED_BLUE, HIGH);
-        delay(100);
-        digitalWrite(LED_BLUE, LOW);
-        delay(100);
-    }
-}
-
-void openDoor() {
-    digitalWrite(LED_BLUE, HIGH);
-    delay(4000);
-    digitalWrite(LED_BLUE, LOW);
-}
 
 String getOrCreateDeviceSecret() {
     String existingSecret = prefs.getString(PREFS_KEY_DEVICE_SECRET);
