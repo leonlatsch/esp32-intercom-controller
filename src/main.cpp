@@ -1,7 +1,9 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <Preferences.h>
+
 #include "uuid/uuid.h"
+#include "JsonHelper.h"
 
 const int LED_BLUE = 2;
 const char* EMPTY_STRING = "";
@@ -88,23 +90,32 @@ void handleWifiConfig() {
 }
 
 void handleReset() {
-    securedEndpoint([]() {
-        prefs.begin(PREFS_NAMESPACE, false);
-        prefs.clear();
-        prefs.end();
+    prefs.begin(PREFS_NAMESPACE, false);
+    prefs.clear();
+    prefs.end();
 
-        server.send(200, "text/text", "Reset. Restarting in 5 seconds...");
-        delay(5000);
-        ESP.restart();
-    });
+    server.send(200, "text/text", "Reset. Restarting in 5 seconds...");
+    delay(5000);
+    ESP.restart();
 }
 
 /// HTTP AP
 
 void handleSetup() {
+    String rawBody = server.arg(0);
+
+    String ssid;
+    String password;
+    readCredentialsFromRequest(rawBody, ssid, password);
+
+    if (ssid == NULL || password == NULL) {
+        server.send(400);
+        return;
+    }
+
     prefs.begin(PREFS_NAMESPACE);
-    prefs.putString(PREFS_KEY_SSID, "E-CORB"); // TODO: get from req
-    prefs.putString(PREFS_KEY_PASSWORD, "gna730gj0q368539fh638"); // TODO: get from req
+    prefs.putString(PREFS_KEY_SSID, ssid);
+    prefs.putString(PREFS_KEY_PASSWORD, password);
     prefs.end();
 
     server.send(200, "text/text", "Setup complete. Restarting in 5 seconds | Device Secret: " + DEVICE_SECRET);
