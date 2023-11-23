@@ -4,7 +4,7 @@
 const char *SSID = "E-CORB";
 const char *PASSWORD = "gna730gj0q368539fh638";
 
-const int LED_BUILTIN = 2;
+const int LED_BLUE = 2;
 
 String DEVICE_SECRET = "aca9d58d-a839-49ab-8977-6b5d62257998";
 const char* SECTER_HEADER_NAME = "secret";
@@ -14,9 +14,9 @@ WebServer server(80);
 
 void openDoor() {
     Serial.println("Opening Door\n");
-    digitalWrite(LED_BUILTIN, HIGH);
+    digitalWrite(LED_BLUE, HIGH);
     delay(3000);
-    digitalWrite(LED_BUILTIN, LOW);
+    digitalWrite(LED_BLUE, LOW);
 }
 
 void handleOpenDoor() {
@@ -51,9 +51,9 @@ void setup_wifi() {
         Serial.print(" IP: ");
         Serial.println(WiFi.localIP());
 
-        digitalWrite(LED_BUILTIN, HIGH);
+        digitalWrite(LED_BLUE, HIGH);
         delay(5000);
-        digitalWrite(LED_BUILTIN, LOW);
+        digitalWrite(LED_BLUE, LOW);
     }
 }
 
@@ -61,7 +61,7 @@ void setup() {
     Serial.begin(9600);
     while (!Serial);
     Serial.println("");
-    pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(LED_BLUE, OUTPUT);
     delay(1000);
 
     setup_wifi();
