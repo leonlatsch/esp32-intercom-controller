@@ -1,14 +1,12 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <Preferences.h>
+#include <mesh_uuid.h>
 
 const char *PREFS_NAMESPACE = "icc";
 const char *PREFS_KEY_SSID = "SSID";
 const char *PREFS_KEY_PASSWORD = "PASS";
 Preferences prefs;
-
-const char *SSID = "E-CORB";
-const char *PASSWORD = "gna730gj0q368539fh638";
 
 const int LED_BLUE = 2;
 const char* EMPTY_STRING = "";
@@ -19,6 +17,8 @@ const char* EXPECTED_HEADERS[] = { "secret" };
 
 const int PORT = 80;
 WebServer server(PORT);
+
+/// BOARD INTERACTION
 
 void blink(int times) {
     for (int i = 0; i < times; i++) {
@@ -35,6 +35,8 @@ void openDoor() {
     digitalWrite(LED_BLUE, LOW);
 }
 
+/// HTTP STA
+
 void handleOpenDoor() {
     String sentSecret = server.header(SECTER_HEADER_NAME);
 
@@ -44,17 +46,6 @@ void handleOpenDoor() {
     } else {
         server.send(403);
     }
-}
-
-void handleSetup() {
-    prefs.begin(PREFS_NAMESPACE);
-    prefs.putString(PREFS_KEY_SSID, SSID);
-    prefs.putString(PREFS_KEY_PASSWORD, PASSWORD);
-    prefs.end();
-
-    server.send(200, "text/text", "Setup complete. Restarting in 5 seconds");
-    delay(5000);
-    ESP.restart();
 }
 
 void handleWifiConfig() {
@@ -76,8 +67,22 @@ void handleReset() {
     ESP.restart();
 }
 
-void setup_routing() {
-    server.on("/setup", handleSetup);
+/// HTTP AP
+
+void handleSetup() {
+    prefs.begin(PREFS_NAMESPACE);
+    prefs.putString(PREFS_KEY_SSID, "E-CORB"); // TODO: get from req
+    prefs.putString(PREFS_KEY_PASSWORD, "gna730gj0q368539fh638"); // TODO: get from req
+    prefs.end();
+
+    server.send(200, "text/text", "Setup complete. Restarting in 5 seconds...");
+    delay(5000);
+    ESP.restart();
+}
+
+/// ROUTING SETUP
+
+void setup_sta_routing() {
     server.on("/wificonfig", handleWifiConfig);
     server.on("/opendoor", handleOpenDoor);
     server.on("/reset", handleReset);
@@ -85,6 +90,13 @@ void setup_routing() {
     server.collectHeaders(EXPECTED_HEADERS, sizeof(EXPECTED_HEADERS));
     server.begin();
 }
+
+void setup_ap_routing() {
+    server.on("/setup", handleSetup);
+    server.begin();
+}
+
+/// WIFI SETUP
 
 bool wifiConfigured() {
     prefs.begin(PREFS_NAMESPACE, false);
@@ -97,15 +109,21 @@ bool wifiConfigured() {
 
 void setup_wifi_sta() {
     Serial.println("Starting in STA Mode");
+
+    prefs.begin(PREFS_NAMESPACE, false);
+    String ssid = prefs.getString(PREFS_KEY_SSID, EMPTY_STRING);
+    String pass = prefs.getString(PREFS_KEY_PASSWORD, EMPTY_STRING);
+    prefs.end();
+
     WiFi.mode(WIFI_STA);
-    WiFi.begin(SSID, PASSWORD);
+    WiFi.begin(ssid, pass);
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(100);
     }
 
     if (WiFi.isConnected()) {
-        Serial.print(SSID);
+        Serial.print(ssid);
         Serial.print(" | ");
         Serial.println(WiFi.localIP());
 
@@ -124,6 +142,8 @@ void setup_wifi_ap() {
     blink(4);
 }
 
+/// GENERAL SETUP
+
 void setupBoard() {
     Serial.begin(9600);
     while (!Serial);
@@ -132,14 +152,17 @@ void setupBoard() {
     delay(100);
 }
 
+/// LIFECYCLE METHODS
+
 void setup() {
     setupBoard();
     if (wifiConfigured()) {
         setup_wifi_sta();
+        setup_sta_routing();
     } else {
         setup_wifi_ap();
+        setup_ap_routing();
     }
-    setup_routing();
 }
 
 void loop(){
