@@ -21,8 +21,6 @@ WiFiManager wifiManager(prefs);
 
 String DEVICE_SECRET;
 
-/// BOARD INTERACTION
-
 String getOrCreateDeviceSecret() {
     String existingSecret = prefs.getString(PREFS_KEY_DEVICE_SECRET);
 
