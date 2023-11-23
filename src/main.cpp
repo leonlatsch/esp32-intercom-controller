@@ -16,7 +16,7 @@ WebServer server(PORT);
 
 void openDoor() {
     digitalWrite(LED_BLUE, HIGH);
-    delay(3000);
+    delay(4000);
     digitalWrite(LED_BLUE, LOW);
 }
 
