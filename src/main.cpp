@@ -1,7 +1,7 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <Preferences.h>
-#include <mesh_uuid.h>
+#include "uuid/uuid.h"
 
 const char *PREFS_NAMESPACE = "icc";
 const char *PREFS_KEY_SSID = "SSID";
@@ -35,12 +35,25 @@ void openDoor() {
     digitalWrite(LED_BLUE, LOW);
 }
 
+String genDeviceSecret() {
+    uuid_t uuid;
+    char uuidStr[UUID_STR_LEN];
+
+    uuid_generate(uuid);
+    uuid_unparse(uuid, uuidStr);
+
+    return String(uuidStr);
+}
+
 /// HTTP STA
 
-void handleOpenDoor() {
+bool requestIsAuthorized() {
     String sentSecret = server.header(SECTER_HEADER_NAME);
+    return DEVICE_SECRET == sentSecret;
+}
 
-    if (DEVICE_SECRET == sentSecret) {
+void handleOpenDoor() {
+    if (requestIsAuthorized()) {
         server.send(200);
         openDoor();
     } else {
@@ -49,22 +62,30 @@ void handleOpenDoor() {
 }
 
 void handleWifiConfig() {
-    prefs.begin(PREFS_NAMESPACE);
-    String ssid = prefs.getString(PREFS_KEY_SSID);
-    String pass = prefs.getString(PREFS_KEY_PASSWORD);
-    prefs.end();
+    if (requestIsAuthorized()) {
+        prefs.begin(PREFS_NAMESPACE);
+        String ssid = prefs.getString(PREFS_KEY_SSID);
+        String pass = prefs.getString(PREFS_KEY_PASSWORD);
+        prefs.end();
 
-    server.send(200, "text/text", ssid + " | " + pass);
+        server.send(200, "text/text", ssid + " | " + pass);
+    } else {
+        server.send(403);
+    }
 }
 
 void handleReset() {
-    prefs.begin(PREFS_NAMESPACE, false);
-    prefs.clear();
-    prefs.end();
+    if (requestIsAuthorized()) {
+        prefs.begin(PREFS_NAMESPACE, false);
+        prefs.clear();
+        prefs.end();
 
-    server.send(200, "text/text", "Reset. Restarting in 5 seconds...");
-    delay(5000);
-    ESP.restart();
+        server.send(200, "text/text", "Reset. Restarting in 5 seconds...");
+        delay(5000);
+        ESP.restart();
+    } else {
+        server.send(403);
+    }
 }
 
 /// HTTP AP
@@ -75,8 +96,9 @@ void handleSetup() {
     prefs.putString(PREFS_KEY_PASSWORD, "gna730gj0q368539fh638"); // TODO: get from req
     prefs.end();
 
-    server.send(200, "text/text", "Setup complete. Restarting in 5 seconds...");
+    server.send(200, "text/text", "Setup complete. Restarting in 5 seconds | Device Secret: " + DEVICE_SECRET);
     delay(5000);
+    digitalWrite(LED_BLUE, LOW);
     ESP.restart();
 }
 
@@ -139,7 +161,7 @@ void setup_wifi_ap() {
     Serial.print(ap_ssid);
     Serial.print(" | ");
     Serial.println(WiFi.softAPIP());
-    blink(4);
+    digitalWrite(LED_BLUE, HIGH);
 }
 
 /// GENERAL SETUP
@@ -156,6 +178,9 @@ void setupBoard() {
 
 void setup() {
     setupBoard();
+
+    Serial.println(genDeviceSecret());
+
     if (wifiConfigured()) {
         setup_wifi_sta();
         setup_sta_routing();
