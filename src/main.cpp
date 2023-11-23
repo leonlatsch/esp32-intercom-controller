@@ -6,6 +6,7 @@
 const char *PREFS_NAMESPACE = "icc";
 const char *PREFS_KEY_SSID = "SSID";
 const char *PREFS_KEY_PASSWORD = "PASS";
+const char *PREFS_KEY_DEVICE_SECRET = "DSEC";
 Preferences prefs;
 
 const int LED_BLUE = 2;
@@ -35,14 +36,26 @@ void openDoor() {
     digitalWrite(LED_BLUE, LOW);
 }
 
-String genDeviceSecret() {
+String getOrCreateDeviceSecret() {
+    prefs.begin(PREFS_NAMESPACE, false);
+    String existingSecret = prefs.getString(PREFS_KEY_DEVICE_SECRET);
+
+    if (existingSecret != EMPTY_STRING) {
+        prefs.end();
+        return existingSecret;
+    }
+
     uuid_t uuid;
     char uuidStr[UUID_STR_LEN];
 
     uuid_generate(uuid);
     uuid_unparse(uuid, uuidStr);
 
-    return String(uuidStr);
+    String newDeviceSecret(uuidStr);
+
+    prefs.putString(PREFS_KEY_DEVICE_SECRET, newDeviceSecret);
+    prefs.end();
+    return newDeviceSecret;
 }
 
 /// HTTP STA
@@ -179,7 +192,7 @@ void setupBoard() {
 void setup() {
     setupBoard();
 
-    Serial.println(genDeviceSecret());
+    Serial.println(getOrCreateDeviceSecret());
 
     if (wifiConfigured()) {
         setup_wifi_sta();
