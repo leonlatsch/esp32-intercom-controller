@@ -3,21 +3,21 @@
 #include <Preferences.h>
 #include "uuid/uuid.h"
 
+const int LED_BLUE = 2;
+const char* EMPTY_STRING = "";
+
 const char *PREFS_NAMESPACE = "icc";
 const char *PREFS_KEY_SSID = "SSID";
 const char *PREFS_KEY_PASSWORD = "PASS";
 const char *PREFS_KEY_DEVICE_SECRET = "DSEC";
 Preferences prefs;
 
-const int LED_BLUE = 2;
-const char* EMPTY_STRING = "";
-
-String DEVICE_SECRET = "aca9d58d-a839-49ab-8977-6b5d62257998";
 const char* SECTER_HEADER_NAME = "secret";
 const char* EXPECTED_HEADERS[] = { "secret" };
 
 const int PORT = 80;
 WebServer server(PORT);
+String DEVICE_SECRET;
 
 /// BOARD INTERACTION
 
@@ -62,7 +62,7 @@ String getOrCreateDeviceSecret() {
 
 bool requestIsAuthorized() {
     String sentSecret = server.header(SECTER_HEADER_NAME);
-    return DEVICE_SECRET == sentSecret;
+    return getOrCreateDeviceSecret() == sentSecret;
 }
 
 void handleOpenDoor() {
@@ -180,10 +180,18 @@ void setup_wifi_ap() {
 /// GENERAL SETUP
 
 void setupBoard() {
+    // Serial
     Serial.begin(9600);
     while (!Serial);
     Serial.println(EMPTY_STRING);
+
+    // Pins
     pinMode(LED_BLUE, OUTPUT);
+
+    // Device Secret
+    DEVICE_SECRET = getOrCreateDeviceSecret();
+    Serial.println(DEVICE_SECRET);
+
     delay(100);
 }
 
@@ -191,8 +199,6 @@ void setupBoard() {
 
 void setup() {
     setupBoard();
-
-    Serial.println(getOrCreateDeviceSecret());
 
     if (wifiConfigured()) {
         setup_wifi_sta();
