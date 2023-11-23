@@ -36,11 +36,6 @@ POST http://192.168.4.1/setup
 |----------|---------|--------------------|
 | `/setup` | no      | 200, 400           |
 
-- `/opendoor` - Open the door / currently just enable blue led
-- `/wificonfig` - Return the stored wifi config
-- `/reset` - Hardware reset. ESP will reboot and enter setup mode
-- `/setup` - Only available in setup mode
-
 ## Device secret
 The ESP generates a device secret when calling `/setup`. It is only shown once in the response.
 
