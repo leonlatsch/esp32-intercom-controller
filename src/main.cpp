@@ -60,35 +60,35 @@ String getOrCreateDeviceSecret() {
 
 /// HTTP STA
 
-bool requestIsAuthorized() {
+void securedEndpoint(std::function<void(void)> handler) {
     String sentSecret = server.header(SECTER_HEADER_NAME);
-    return getOrCreateDeviceSecret() == sentSecret;
-}
-
-void handleOpenDoor() {
-    if (requestIsAuthorized()) {
-        server.send(200);
-        openDoor();
+    if (DEVICE_SECRET == sentSecret) {
+        handler();
     } else {
         server.send(403);
     }
 }
 
+void handleOpenDoor() {
+    securedEndpoint([]() {
+        server.send(200);
+        openDoor();
+    });
+}
+
 void handleWifiConfig() {
-    if (requestIsAuthorized()) {
+    securedEndpoint([]() {
         prefs.begin(PREFS_NAMESPACE);
         String ssid = prefs.getString(PREFS_KEY_SSID);
         String pass = prefs.getString(PREFS_KEY_PASSWORD);
         prefs.end();
 
         server.send(200, "text/text", ssid + " | " + pass);
-    } else {
-        server.send(403);
-    }
+    });
 }
 
 void handleReset() {
-    if (requestIsAuthorized()) {
+    securedEndpoint([]() {
         prefs.begin(PREFS_NAMESPACE, false);
         prefs.clear();
         prefs.end();
@@ -96,9 +96,7 @@ void handleReset() {
         server.send(200, "text/text", "Reset. Restarting in 5 seconds...");
         delay(5000);
         ESP.restart();
-    } else {
-        server.send(403);
-    }
+    });
 }
 
 /// HTTP AP
