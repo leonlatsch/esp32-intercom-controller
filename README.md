@@ -24,6 +24,18 @@ POST http://192.168.4.1/setup
 
 ## API Endpoints
 
+**Setup Mode**
+| Endpoint      | Secured | Possible Responses |
+|---------------|---------|--------------------|
+| `/opendoor`   | yes     | 200, 403           |
+| `/wificonfig` | yes     | 200, 403           |
+| `/reset`      | no      | 200                |
+
+**Operational Mode**
+| Endpoint | Secured | Possible Responses |
+|----------|---------|--------------------|
+| `/setup` | no      | 200, 400           |
+
 - `/opendoor` - Open the door / currently just enable blue led
 - `/wificonfig` - Return the stored wifi config
 - `/reset` - Hardware reset. ESP will reboot and enter setup mode
@@ -31,5 +43,7 @@ POST http://192.168.4.1/setup
 
 ## Device secret
 The ESP generates a device secret when calling `/setup`. It is only shown once in the response.
+
 Send this secret as a header for all secured endpoints like this: `Secret: <device-secret>`.
+
 If you forget the secret, or didn't catch it in the response, you need to call `/reset` and `/setup` again.
