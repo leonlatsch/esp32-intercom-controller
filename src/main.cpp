@@ -20,6 +20,15 @@ const char* EXPECTED_HEADERS[] = { "secret" };
 const int PORT = 80;
 WebServer server(PORT);
 
+void blink(int times) {
+    for (int i = 0; i < times; i++) {
+        digitalWrite(LED_BLUE, HIGH);
+        delay(100);
+        digitalWrite(LED_BLUE, LOW);
+        delay(100);
+    }
+}
+
 void openDoor() {
     digitalWrite(LED_BLUE, HIGH);
     delay(4000);
@@ -38,17 +47,20 @@ void handleOpenDoor() {
 }
 
 void handleSetup() {
-    prefs.begin("icc");
-    prefs.putString("SSID", SSID);
-    prefs.putString("PASS", PASSWORD);
+    prefs.begin(PREFS_NAMESPACE);
+    prefs.putString(PREFS_KEY_SSID, SSID);
+    prefs.putString(PREFS_KEY_PASSWORD, PASSWORD);
     prefs.end();
-    server.send(200);
+
+    server.send(200, "text/text", "Setup complete. Restarting in 5 seconds");
+    delay(5000);
+    ESP.restart();
 }
 
 void handleWifiConfig() {
-    prefs.begin("icc");
-    String ssid = prefs.getString("SSID");
-    String pass = prefs.getString("PASS");
+    prefs.begin(PREFS_NAMESPACE);
+    String ssid = prefs.getString(PREFS_KEY_SSID);
+    String pass = prefs.getString(PREFS_KEY_PASSWORD);
     prefs.end();
 
     server.send(200, "text/text", ssid + " | " + pass);
@@ -58,7 +70,9 @@ void handleReset() {
     prefs.begin(PREFS_NAMESPACE, false);
     prefs.clear();
     prefs.end();
-    server.send(200);
+
+    server.send(200, "text/text", "Reset. Restarting in 5 seconds...");
+    delay(5000);
     ESP.restart();
 }
 
@@ -82,6 +96,7 @@ bool wifiConfigured() {
 }
 
 void setup_wifi_sta() {
+    Serial.println("Starting in STA Mode");
     WiFi.mode(WIFI_STA);
     WiFi.begin(SSID, PASSWORD);
 
@@ -94,10 +109,19 @@ void setup_wifi_sta() {
         Serial.print(" | ");
         Serial.println(WiFi.localIP());
 
-        digitalWrite(LED_BLUE, HIGH);
-        delay(1000);
-        digitalWrite(LED_BLUE, LOW);
+        blink(2);
     }
+}
+
+void setup_wifi_ap() {
+    Serial.println("Starting in AP Mode");
+    const char* ap_ssid = "ESP32 Intercom Controller";
+
+    WiFi.softAP(ap_ssid, NULL, 1, 0, 1);
+    Serial.print(ap_ssid);
+    Serial.print(" | ");
+    Serial.println(WiFi.softAPIP());
+    blink(4);
 }
 
 void setupBoard() {
@@ -110,14 +134,12 @@ void setupBoard() {
 
 void setup() {
     setupBoard();
-    setup_wifi_sta();
-    setup_routing();
-
     if (wifiConfigured()) {
-        Serial.println("WiFi configured, starting STA");
+        setup_wifi_sta();
     } else {
-        Serial.println("No WiFi configured, starting AP");
+        setup_wifi_ap();
     }
+    setup_routing();
 }
 
 void loop(){
