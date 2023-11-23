@@ -30,4 +30,6 @@ POST http://192.168.4.1/setup
 - `/setup` - Only available in setup mode
 
 ## Device secret
-TBD
+The ESP generates a device secret when calling `/setup`. It is only shown once in the response.
+Send this secret as a header for all secured endpoints like this: `Secret: <device-secret>`.
+If you forget the secret, or didn't catch it in the response, you need to call `/reset` and `/setup` again.
