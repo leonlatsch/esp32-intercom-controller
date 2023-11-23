@@ -39,11 +39,9 @@ void openDoor() {
 }
 
 String getOrCreateDeviceSecret() {
-    prefs.begin(PREFS_NAMESPACE, false);
     String existingSecret = prefs.getString(PREFS_KEY_DEVICE_SECRET);
 
     if (existingSecret != EMPTY_STRING) {
-        prefs.end();
         return existingSecret;
     }
 
@@ -56,8 +54,13 @@ String getOrCreateDeviceSecret() {
     String newDeviceSecret(uuidStr);
 
     prefs.putString(PREFS_KEY_DEVICE_SECRET, newDeviceSecret);
-    prefs.end();
     return newDeviceSecret;
+}
+
+void reboot() {
+    prefs.end();
+    server.close();
+    ESP.restart();
 }
 
 /// HTTP STA
@@ -80,23 +83,19 @@ void handleOpenDoor() {
 
 void handleWifiConfig() {
     securedEndpoint([]() {
-        prefs.begin(PREFS_NAMESPACE);
         String ssid = prefs.getString(PREFS_KEY_SSID);
         String pass = prefs.getString(PREFS_KEY_PASSWORD);
-        prefs.end();
 
         server.send(200, "text/text", ssid + " | " + pass);
     });
 }
 
 void handleReset() {
-    prefs.begin(PREFS_NAMESPACE, false);
     prefs.clear();
-    prefs.end();
 
     server.send(200, "text/text", "Reset. Restarting in 5 seconds...");
     delay(5000);
-    ESP.restart();
+    reboot();
 }
 
 /// HTTP AP
@@ -113,15 +112,13 @@ void handleSetup() {
         return;
     }
 
-    prefs.begin(PREFS_NAMESPACE);
     prefs.putString(PREFS_KEY_SSID, ssid);
     prefs.putString(PREFS_KEY_PASSWORD, password);
-    prefs.end();
 
     server.send(200, "text/text", "Setup complete. Restarting in 5 seconds | Device Secret: " + DEVICE_SECRET);
     delay(5000);
     digitalWrite(LED_BLUE, LOW);
-    ESP.restart();
+    reboot();
 }
 
 /// ROUTING SETUP
@@ -143,21 +140,16 @@ void setup_ap_routing() {
 /// WIFI SETUP
 
 bool wifiConfigured() {
-    prefs.begin(PREFS_NAMESPACE, false);
     String ssid = prefs.getString(PREFS_KEY_SSID, EMPTY_STRING);
     String pass = prefs.getString(PREFS_KEY_PASSWORD, EMPTY_STRING);
-    prefs.end();
 
     return ssid != EMPTY_STRING && pass != EMPTY_STRING;
 }
 
 void setup_wifi_sta() {
     Serial.println("Starting in STA Mode");
-
-    prefs.begin(PREFS_NAMESPACE, false);
     String ssid = prefs.getString(PREFS_KEY_SSID, EMPTY_STRING);
     String pass = prefs.getString(PREFS_KEY_PASSWORD, EMPTY_STRING);
-    prefs.end();
 
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, pass);
@@ -204,10 +196,15 @@ void setupBoard() {
     delay(100);
 }
 
+void setupPersistence() {
+    prefs.begin(PREFS_NAMESPACE, false);
+}
+
 /// LIFECYCLE METHODS
 
 void setup() {
     setupBoard();
+    setupPersistence();
 
     if (wifiConfigured()) {
         setup_wifi_sta();
