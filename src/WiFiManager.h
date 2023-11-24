@@ -3,8 +3,8 @@
 
 #include <Preferences.h>
 
-const char *PREFS_KEY_SSID;
-const char *PREFS_KEY_PASSWORD;
+const char *PREFS_KEY_SSID = "SSID";
+const char *PREFS_KEY_PASSWORD = "PASS";
 
 class WiFiManager;
 

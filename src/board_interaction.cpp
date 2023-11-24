@@ -2,8 +2,6 @@
 
 #include "board_interaction.h"
 
-const int LED_BLUE = 2;
-
 void blink(int times) {
     for (int i = 0; i < times; i++) {
         digitalWrite(LED_BLUE, HIGH);

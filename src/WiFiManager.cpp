@@ -5,8 +5,6 @@
 #include "WiFiManager.h"
 
 const char *AP_SSID = "ESP32 Intercom Controller";
-const char *PREFS_KEY_SSID = "SSID";
-const char *PREFS_KEY_PASSWORD = "PASS";
 
 class WiFiManager {
     Preferences prefs;
