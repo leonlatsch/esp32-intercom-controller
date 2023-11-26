@@ -2,10 +2,10 @@
 #include <WebServer.h>
 #include <Preferences.h>
 
-#include "uuid/uuid.h"
-#include "JsonHelper.h"
+#include "util/uuid/uuid.h"
+#include "util/JsonHelper.h"
 #include "board_interaction.h"
-#include "WiFiManager.h"
+#include "connection/WiFiManager.h"
 #include "PrefsWrapper.h"
 #include "security/device_secret.h"
 

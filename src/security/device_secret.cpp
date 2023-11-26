@@ -1,6 +1,6 @@
 #include "device_secret.h"
 #include "../PrefsWrapper.h"
-#include "../uuid/uuid.h"
+#include "../util/uuid/uuid.h"
 
 const char *PREFS_KEY_DEVICE_SECRET = "DSEC";
 
