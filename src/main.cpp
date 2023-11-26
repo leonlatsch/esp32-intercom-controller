@@ -6,10 +6,9 @@
 #include "JsonHelper.h"
 #include "board_interaction.h"
 #include "WiFiManager.h"
+#include "PrefsWrapper.h"
 
-const char *PREFS_NAMESPACE = "icc";
 const char *PREFS_KEY_DEVICE_SECRET = "DSEC";
-Preferences prefs;
 
 const char* SECTER_HEADER_NAME = "secret";
 const char* EXPECTED_HEADERS[] = { "secret" };
@@ -17,6 +16,7 @@ const char* EXPECTED_HEADERS[] = { "secret" };
 const int PORT = 80;
 WebServer server(PORT);
 
+PrefsWrapper prefs = PrefsWrapper();
 WiFiManager wifiManager(prefs);
 
 String DEVICE_SECRET;
@@ -41,7 +41,6 @@ String getOrCreateDeviceSecret() {
 }
 
 void reboot() {
-    prefs.end();
     server.close();
     ESP.restart();
 }
@@ -138,15 +137,10 @@ void setupBoard() {
     delay(100);
 }
 
-void setupPersistence() {
-    prefs.begin(PREFS_NAMESPACE, false);
-}
-
 /// LIFECYCLE METHODS
 
 void setup() {
     setupBoard();
-    setupPersistence();
 
     if (wifiManager.wifi_creds_configures()) {
         wifiManager.setup_wifi_sta();
