@@ -7,8 +7,7 @@
 #include "board_interaction.h"
 #include "WiFiManager.h"
 #include "PrefsWrapper.h"
-
-const char *PREFS_KEY_DEVICE_SECRET = "DSEC";
+#include "security/device_secret.h"
 
 const char* SECTER_HEADER_NAME = "secret";
 const char* EXPECTED_HEADERS[] = { "secret" };
@@ -18,27 +17,7 @@ WebServer server(PORT);
 
 PrefsWrapper prefs = PrefsWrapper();
 WiFiManager wifiManager(prefs);
-
-String DEVICE_SECRET;
-
-String getOrCreateDeviceSecret() {
-    String existingSecret = prefs.getString(PREFS_KEY_DEVICE_SECRET);
-
-    if (!existingSecret.isEmpty()) {
-        return existingSecret;
-    }
-
-    uuid_t uuid;
-    char uuidStr[UUID_STR_LEN];
-
-    uuid_generate(uuid);
-    uuid_unparse(uuid, uuidStr);
-
-    String newDeviceSecret(uuidStr);
-
-    prefs.putString(PREFS_KEY_DEVICE_SECRET, newDeviceSecret);
-    return newDeviceSecret;
-}
+DeviceSecretStore deviceSecretStore(prefs);
 
 void reboot() {
     server.close();
@@ -49,7 +28,7 @@ void reboot() {
 
 void securedEndpoint(std::function<void(void)> handler) {
     String sentSecret = server.header(SECTER_HEADER_NAME);
-    if (DEVICE_SECRET == sentSecret) {
+    if (deviceSecretStore.getDeviceSecret() == sentSecret) {
         handler();
     } else {
         server.send(403);
@@ -96,8 +75,9 @@ void handleSetup() {
 
     prefs.putString(PREFS_KEY_SSID, ssid);
     prefs.putString(PREFS_KEY_PASSWORD, password);
+    String deviceSecret = deviceSecretStore.getDeviceSecret();
 
-    server.send(200, "text/text", "Setup complete. Restarting in 5 seconds | Device Secret: " + DEVICE_SECRET);
+    server.send(200, "text/text", "Setup complete. Restarting in 5 seconds | Device Secret: " + deviceSecret);
     delay(5000);
     digitalWrite(LED_BLUE, LOW);
     reboot();
@@ -129,10 +109,7 @@ void setupBoard() {
 
     // Pins
     pinMode(LED_BLUE, OUTPUT);
-
-    // Device Secret
-    DEVICE_SECRET = getOrCreateDeviceSecret();
-    Serial.println(DEVICE_SECRET);
+    Serial.println(deviceSecretStore.getDeviceSecret());
 
     delay(100);
 }
