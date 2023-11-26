@@ -11,13 +11,14 @@ class WiFiManager;
 class WiFiManager {
     private:
         PrefsWrapper prefs;
+        void setup_wifi_sta();
+        void setup_wifi_ap();
+        bool wifi_creds_configured();
     public:
         WiFiManager(PrefsWrapper _prefs) {
             prefs = _prefs;
         }
-        void setup_wifi_sta();
-        void setup_wifi_ap();
-        bool wifi_creds_configures();
+        wifi_mode_t setup_wifi();
 };
 
 #endif

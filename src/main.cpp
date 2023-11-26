@@ -19,11 +19,6 @@ PrefsWrapper prefs = PrefsWrapper();
 WiFiManager wifiManager(prefs);
 DeviceSecretStore deviceSecretStore(prefs);
 
-void reboot() {
-    server.close();
-    ESP.restart();
-}
-
 /// HTTP STA
 
 void securedEndpoint(std::function<void(void)> handler) {
@@ -56,7 +51,7 @@ void handleReset() {
 
     server.send(200, "text/text", "Reset. Restarting in 5 seconds...");
     delay(5000);
-    reboot();
+    ESP.restart();
 }
 
 /// HTTP AP
@@ -80,7 +75,7 @@ void handleSetup() {
     server.send(200, "text/text", "Setup complete. Restarting in 5 seconds | Device Secret: " + deviceSecret);
     delay(5000);
     digitalWrite(LED_BLUE, LOW);
-    reboot();
+    ESP.restart();
 }
 
 /// ROUTING SETUP
@@ -119,11 +114,10 @@ void setupBoard() {
 void setup() {
     setupBoard();
 
-    if (wifiManager.wifi_creds_configures()) {
-        wifiManager.setup_wifi_sta();
+    wifi_mode_t mode = wifiManager.setup_wifi();
+    if (mode == WIFI_STA) {
         setup_sta_routing();
-    } else {
-        wifiManager.setup_wifi_ap();
+    } else if (mode == WIFI_AP) {
         setup_ap_routing();
     }
 }

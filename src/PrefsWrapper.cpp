@@ -19,5 +19,7 @@ bool PrefsWrapper::putString(const char *key, String value) {
 }
 
 void PrefsWrapper::clear() {
+    prefs.begin(PREFS_NAMESPACE, false);
     prefs.clear();
+    prefs.end();
 }
