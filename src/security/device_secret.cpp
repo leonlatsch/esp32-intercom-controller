@@ -4,7 +4,7 @@
 
 const char *PREFS_KEY_DEVICE_SECRET = "DSEC";
 
-String DeviceSecretStore::generateDeviceSecret() {
+void DeviceSecretStore::generateDeviceSecret() {
     uuid_t uuid;
     char uuidStr[UUID_STR_LEN];
 

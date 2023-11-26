@@ -10,7 +10,7 @@ class DeviceSecretStore {
     private:
         String localDeviceSecret;
         PrefsWrapper prefs;
-        String generateDeviceSecret();
+        void generateDeviceSecret();
     public:
         DeviceSecretStore(PrefsWrapper _prefs) {
             prefs = _prefs;
