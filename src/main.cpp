@@ -7,7 +7,7 @@
 #include "board_interaction.h"
 #include "connection/WiFiManager.h"
 #include "PrefsWrapper.h"
-#include "security/device_secret.h"
+#include "security/DeviceSecretStore.h"
 
 const char* SECTER_HEADER_NAME = "secret";
 const char* EXPECTED_HEADERS[] = { "secret" };

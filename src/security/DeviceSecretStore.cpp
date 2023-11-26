@@ -1,4 +1,4 @@
-#include "device_secret.h"
+#include "DeviceSecretStore.h"
 #include "../PrefsWrapper.h"
 #include "../util/uuid/uuid.h"
 
