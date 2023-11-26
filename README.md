@@ -20,7 +20,10 @@ POST http://192.168.4.1/setup
 }
 ```
 5. ESP will restart in 5 seconds
-6. The blue led will blink 2 times if you provided correct wifi credentials
+6. The blue led will blink while trying to connect
+7. The ESP will try for 60 seconds to connect to the configured wifi
+    7.1. If the led blinks 5 times its connected
+    7.2. If the led is led up again, connection failed. Its back in setup mode configuration your credentials are still saved. Eg. if your wifi was down, just restart the ESP and try again
 
 ## API Endpoints
 
