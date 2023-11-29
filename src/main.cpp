@@ -9,6 +9,7 @@
 #include "PrefsWrapper.h"
 #include "security/DeviceSecretStore.h"
 
+const char* CONTENT_TYPE_TEXT = "text/text";
 const char* SECTER_HEADER_NAME = "secret";
 const char* EXPECTED_HEADERS[] = { "secret" };
 
@@ -30,6 +31,10 @@ void securedEndpoint(std::function<void(void)> handler) {
     }
 }
 
+void handleHealthCheck() {
+    server.send(200, CONTENT_TYPE_TEXT, "ESP32 Intercom Controller");
+}
+
 void handleOpenDoor() {
     securedEndpoint([]() {
         server.send(200);
@@ -42,14 +47,14 @@ void handleWifiConfig() {
         String ssid = prefs.getString(PREFS_KEY_SSID);
         String pass = prefs.getString(PREFS_KEY_PASSWORD);
 
-        server.send(200, "text/text", ssid + " | " + pass);
+        server.send(200, CONTENT_TYPE_TEXT, ssid + " | " + pass);
     });
 }
 
 void handleReset() {
     prefs.clear();
 
-    server.send(200, "text/text", "Reset. Restarting in 5 seconds...");
+    server.send(200, CONTENT_TYPE_TEXT, "Reset. Restarting in 5 seconds...");
     delay(5000);
     ESP.restart();
 }
@@ -72,7 +77,7 @@ void handleSetup() {
     prefs.putString(PREFS_KEY_PASSWORD, password);
     String deviceSecret = deviceSecretStore.getDeviceSecret();
 
-    server.send(200, "text/text", "Setup complete. Restarting in 5 seconds | Device Secret: " + deviceSecret);
+    server.send(200, CONTENT_TYPE_TEXT, "Setup complete. Restarting in 5 seconds | Device Secret: " + deviceSecret);
     delay(5000);
     digitalWrite(LED_BLUE, LOW);
     ESP.restart();
@@ -81,6 +86,7 @@ void handleSetup() {
 /// ROUTING SETUP
 
 void setup_sta_routing() {
+    server.on("/", handleHealthCheck);
     server.on("/wificonfig", handleWifiConfig);
     server.on("/opendoor", handleOpenDoor);
     server.on("/reset", handleReset);
