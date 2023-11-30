@@ -5,6 +5,9 @@
 
 const int LED_BLUE = 2;
 
+const char* DEVICE_NAME = "ESP32 Intercom Controller V1 Prototype";
+const char* DEVICE_MANUFACTURER = "Techguyz";
+
 struct t_device_info {
     String name;
     String manufacturer;

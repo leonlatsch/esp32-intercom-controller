@@ -1,6 +1,7 @@
 #include <esp32-hal-gpio.h>
 
 #include "board.h"
+#include <WiFi.h>
 
 void blink(int times) {
     for (int i = 0; i < times; i++) {
@@ -22,9 +23,9 @@ void led_off() {
 t_device_info get_device_information() {
     t_device_info d_info;
 
-    d_info.name = "Name";
-    d_info.manufacturer = "Techguyz";
-    d_info.serial_number = "TODO";
+    d_info.name = DEVICE_NAME;
+    d_info.manufacturer = DEVICE_MANUFACTURER;
+    d_info.serial_number = WiFi.macAddress();
 
     return d_info;
 }
