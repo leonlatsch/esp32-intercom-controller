@@ -27,14 +27,16 @@ POST http://192.168.4.1/setup
 
 ## API Endpoints
 
-**Setup Mode**
-| Endpoint      | Secured | Possible Responses |
-|---------------|---------|--------------------|
-| `/opendoor`   | yes     | 200, 403           |
-| `/wificonfig` | yes     | 200, 403           |
-| `/reset`      | no      | 200                |
-
 **Operational Mode**
+| Endpoint      | Secured | Possible Responses | Purpose                |
+|---------------|---------|--------------------| -----------------------|
+| `/`           | no      | 200,               | Healthcheck            |
+| `/opendoor`   | yes     | 200, 403           | Open Door              |
+| `/wificonfig` | yes     | 200, 403           | Get Configured WiFi    |
+| `/reset`      | no      | 200                | Hardware reset         |
+| `/device`     | no      | 200                | Get device information |
+
+**Setup Modee**
 | Endpoint | Secured | Possible Responses |
 |----------|---------|--------------------|
 | `/setup` | no      | 200, 400           |
