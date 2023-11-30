@@ -1,6 +1,6 @@
 #include <Preferences.h>
 #include <WiFi.h>
-#include <board_interaction.h>
+#include <board.h>
 
 #include "WiFiManager.h"
 

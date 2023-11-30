@@ -4,14 +4,16 @@
 
 #include "util/uuid/uuid.h"
 #include "util/JsonHelper.h"
-#include "board_interaction.h"
+#include "board.h"
 #include "connection/WiFiManager.h"
 #include "PrefsWrapper.h"
 #include "security/DeviceSecretStore.h"
 
-const char* CONTENT_TYPE_TEXT = "text/text";
-const char* SECTER_HEADER_NAME = "secret";
-const char* EXPECTED_HEADERS[] = { "secret" };
+const char *CONTENT_TYPE_TEXT = "text/text";
+const char *CONTENT_TYPE_JSON = "application/json";
+
+const char *SECTER_HEADER_NAME = "secret";
+const char *EXPECTED_HEADERS[] = {"secret"};
 
 const int PORT = 80;
 WebServer server(PORT);
@@ -35,10 +37,17 @@ void handleHealthCheck() {
     server.send(200, CONTENT_TYPE_TEXT, "ESP32 Intercom Controller");
 }
 
+void handleDeviceInformation() {
+    t_device_info device_info = get_device_information();
+    String device_info_json = create_device_information_json(device_info);
+
+    server.send(200, CONTENT_TYPE_JSON, device_info_json);
+}
+
 void handleOpenDoor() {
     securedEndpoint([]() {
         server.send(200);
-        openDoor();
+        openDoor(); 
     });
 }
 
@@ -47,7 +56,7 @@ void handleWifiConfig() {
         String ssid = prefs.getString(PREFS_KEY_SSID);
         String pass = prefs.getString(PREFS_KEY_PASSWORD);
 
-        server.send(200, CONTENT_TYPE_TEXT, ssid + " | " + pass);
+        server.send(200, CONTENT_TYPE_TEXT, ssid + " | " + pass); 
     });
 }
 
@@ -87,6 +96,7 @@ void handleSetup() {
 
 void setup_sta_routing() {
     server.on("/", handleHealthCheck);
+    server.on("/device", handleDeviceInformation);
     server.on("/wificonfig", handleWifiConfig);
     server.on("/opendoor", handleOpenDoor);
     server.on("/reset", handleReset);
@@ -128,6 +138,6 @@ void setup() {
     }
 }
 
-void loop(){
+void loop() {
     server.handleClient();
 }

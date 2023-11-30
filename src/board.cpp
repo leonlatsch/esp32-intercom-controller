@@ -1,6 +1,6 @@
 #include <esp32-hal-gpio.h>
 
-#include "board_interaction.h"
+#include "board.h"
 
 void blink(int times) {
     for (int i = 0; i < times; i++) {
@@ -17,6 +17,16 @@ void led_on() {
 
 void led_off() {
     digitalWrite(LED_BLUE, LOW);
+}
+
+t_device_info get_device_information() {
+    t_device_info d_info;
+
+    d_info.name = "Name";
+    d_info.manufacturer = "Techguyz";
+    d_info.serial_number = "TODO";
+
+    return d_info;
 }
 
 void openDoor() {
