@@ -3,6 +3,9 @@
 #include "board.h"
 #include <WiFi.h>
 
+const char* DEVICE_NAME = "ESP32 Intercom Controller V1 Prototype";
+const char* DEVICE_MANUFACTURER = "Techguyz";
+
 void blink(int times) {
     for (int i = 0; i < times; i++) {
         digitalWrite(LED_BLUE, HIGH);
