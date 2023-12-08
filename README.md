@@ -16,7 +16,8 @@ POST http://192.168.4.1/setup
 
 {
     "ssid": "YourWifiNetworkName",
-    "pass": "YourWifiPassword"
+    "pass": "YourWifiPassword",
+    "low_trigger_relay": true/false // Depends on if you use a low trigger relay
 }
 ```
 5. ESP will restart in 5 seconds
@@ -32,7 +33,7 @@ POST http://192.168.4.1/setup
 |---------------|---------|--------------------| -----------------------|
 | `/`           | no      | 200,               | Healthcheck            |
 | `/opendoor`   | yes     | 200, 403           | Open Door              |
-| `/wificonfig` | yes     | 200, 403           | Get Configured WiFi    |
+| `/config`     | yes     | 200, 403           | Get Configuration      |
 | `/reset`      | no      | 200                | Hardware reset         |
 | `/device`     | no      | 200                | Get device information |
 
