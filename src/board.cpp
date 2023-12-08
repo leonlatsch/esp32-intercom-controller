@@ -5,6 +5,7 @@
 
 const char* DEVICE_NAME = "ESP32 Intercom Controller V1 Prototype";
 const char* DEVICE_MANUFACTURER = "Techguyz";
+const char* PREFS_KEY_LOW_TRIGGER_RELAY = "pkltr";
 
 void blink(int times) {
     for (int i = 0; i < times; i++) {
@@ -33,8 +34,19 @@ t_device_info get_device_information() {
     return d_info;
 }
 
-void openDoor() {
-    digitalWrite(DOOR_OPENER_PIN, LOW);
+void openDoor(bool low_trigger_relay) {
+    int on_action;
+    int off_action;
+
+    if (low_trigger_relay) {
+        on_action = LOW;
+        off_action = HIGH;
+    } else {
+        on_action = HIGH;
+        off_action = LOW;
+    }
+
+    digitalWrite(DOOR_OPENER_PIN, on_action);
     delay(4000);
-    digitalWrite(DOOR_OPENER_PIN, HIGH);
+    digitalWrite(DOOR_OPENER_PIN, off_action);
 }

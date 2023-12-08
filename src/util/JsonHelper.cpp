@@ -6,19 +6,24 @@
 
 const char *SSID_JSON_KEY = "ssid";
 const char *PASS_JSON_KEY = "pass";
+const char *LOW_TRIGGER_RELAY_KEY = "low_trigger_relay";
 
-void readCredentialsFromRequest(String rawBody, String &ssidOut, String &passOut) {
+void read_config_from_request(String rawBody, String &ssidOut, String &passOut, bool &low_trigger_relay_out) {
     jparse_ctx_t jctx;
     json_parse_start(&jctx, rawBody.c_str(), rawBody.length());
 
     char ssid[64];
     char pass[64];
+    bool low_trigger_relay;
 
     if (json_obj_get_string(&jctx, SSID_JSON_KEY, ssid, sizeof(ssid)) == OS_SUCCESS) {
         ssidOut = String(ssid);
     }
     if (json_obj_get_string(&jctx, PASS_JSON_KEY, pass, sizeof(pass)) == OS_SUCCESS) {
         passOut = String(pass);
+    }
+    if (json_obj_get_bool(&jctx, LOW_TRIGGER_RELAY_KEY, &low_trigger_relay) == OS_SUCCESS) {
+        low_trigger_relay_out = low_trigger_relay;
     }
 }
 

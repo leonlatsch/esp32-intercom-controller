@@ -22,6 +22,8 @@ PrefsWrapper prefs = PrefsWrapper();
 WiFiManager wifiManager(prefs);
 DeviceSecretStore deviceSecretStore(prefs);
 
+bool low_level_relay;
+
 /// HTTP STA
 
 void securedEndpoint(std::function<void(void)> handler) {
@@ -47,16 +49,17 @@ void handleDeviceInformation() {
 void handleOpenDoor() {
     securedEndpoint([]() {
         server.send(200);
-        openDoor(); 
+        openDoor(low_level_relay); 
     });
 }
 
-void handleWifiConfig() {
+void handleConfig() {
     securedEndpoint([]() {
         String ssid = prefs.getString(PREFS_KEY_SSID);
         String pass = prefs.getString(PREFS_KEY_PASSWORD);
+        bool low_trigger_relay = prefs.getString(PREFS_KEY_LOW_TRIGGER_RELAY);
 
-        server.send(200, CONTENT_TYPE_TEXT, ssid + " | " + pass); 
+        server.send(200, CONTENT_TYPE_TEXT, "SSID: " + ssid + "\nPASS: " + pass + "\nLOW_TRIGGER_RELAY: " + low_level_relay); 
     });
 }
 
@@ -75,7 +78,8 @@ void handleSetup() {
 
     String ssid;
     String password;
-    readCredentialsFromRequest(rawBody, ssid, password);
+    bool low_level_relay;
+    read_config_from_request(rawBody, ssid, password, low_level_relay);
 
     if (ssid == NULL || password == NULL) {
         server.send(400);
@@ -84,6 +88,7 @@ void handleSetup() {
 
     prefs.putString(PREFS_KEY_SSID, ssid);
     prefs.putString(PREFS_KEY_PASSWORD, password);
+    prefs.putBool(PREFS_KEY_LOW_TRIGGER_RELAY, low_level_relay);
     String deviceSecret = deviceSecretStore.getDeviceSecret();
 
     server.send(200, CONTENT_TYPE_TEXT, "Setup complete. Restarting in 5 seconds | Device Secret: " + deviceSecret);
@@ -97,7 +102,7 @@ void handleSetup() {
 void setup_sta_routing() {
     server.on("/", handleHealthCheck);
     server.on("/device", handleDeviceInformation);
-    server.on("/wificonfig", handleWifiConfig);
+    server.on("/config", handleConfig);
     server.on("/opendoor", handleOpenDoor);
     server.on("/reset", handleReset);
 
@@ -121,6 +126,13 @@ void setupBoard() {
     // Pins
     pinMode(LED_BLUE, OUTPUT);
     pinMode(DOOR_OPENER_PIN, OUTPUT);
+
+    low_level_relay = prefs.getBool(PREFS_KEY_LOW_TRIGGER_RELAY);
+    if (low_level_relay) {
+        Serial.println("Setting up for low trigger relay");
+        digitalWrite(DOOR_OPENER_PIN, HIGH);
+    }
+
     Serial.println(deviceSecretStore.getDeviceSecret());
 
     delay(100);
