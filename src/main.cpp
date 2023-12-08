@@ -120,6 +120,7 @@ void setupBoard() {
 
     // Pins
     pinMode(LED_BLUE, OUTPUT);
+    pinMode(DOOR_OPENER_PIN, OUTPUT);
     Serial.println(deviceSecretStore.getDeviceSecret());
 
     delay(100);
