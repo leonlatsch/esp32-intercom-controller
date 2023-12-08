@@ -34,7 +34,7 @@ t_device_info get_device_information() {
 }
 
 void openDoor() {
-    digitalWrite(DOOR_OPENER_PIN, HIGH);
-    delay(4000);
     digitalWrite(DOOR_OPENER_PIN, LOW);
+    delay(4000);
+    digitalWrite(DOOR_OPENER_PIN, HIGH);
 }
