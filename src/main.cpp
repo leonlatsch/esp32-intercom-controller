@@ -8,6 +8,7 @@
 #include "connection/WiFiManager.h"
 #include "PrefsWrapper.h"
 #include "security/DeviceSecretStore.h"
+#include "config.h"
 
 const char *CONTENT_TYPE_TEXT = "text/text";
 const char *CONTENT_TYPE_JSON = "application/json";
@@ -15,14 +16,14 @@ const char *CONTENT_TYPE_JSON = "application/json";
 const char *SECTER_HEADER_NAME = "secret";
 const char *EXPECTED_HEADERS[] = {"secret"};
 
+t_config config;
+
 const int PORT = 80;
 WebServer server(PORT);
 
 PrefsWrapper prefs = PrefsWrapper();
 WiFiManager wifiManager(prefs);
 DeviceSecretStore deviceSecretStore(prefs);
-
-bool low_level_relay;
 
 /// HTTP STA
 
@@ -49,17 +50,16 @@ void handleDeviceInformation() {
 void handleOpenDoor() {
     securedEndpoint([]() {
         server.send(200);
-        openDoor(low_level_relay); 
+        openDoor(config.low_trigger_relay); 
     });
 }
 
 void handleConfig() {
     securedEndpoint([]() {
-        String ssid = prefs.getString(PREFS_KEY_SSID);
-        String pass = prefs.getString(PREFS_KEY_PASSWORD);
-        bool low_trigger_relay = prefs.getString(PREFS_KEY_LOW_TRIGGER_RELAY);
+        t_config config = get_config(prefs);
+        String config_json = create_config_json(config);
 
-        server.send(200, CONTENT_TYPE_TEXT, "SSID: " + ssid + "\nPASS: " + pass + "\nLOW_TRIGGER_RELAY: " + low_level_relay); 
+        server.send(200, CONTENT_TYPE_JSON, config_json); 
     });
 }
 
@@ -76,19 +76,13 @@ void handleReset() {
 void handleSetup() {
     String rawBody = server.arg(0);
 
-    String ssid;
-    String password;
-    bool low_level_relay;
-    read_config_from_request(rawBody, ssid, password, low_level_relay);
-
-    if (ssid == NULL || password == NULL) {
+    t_config config = read_config_from_request(rawBody);
+    if (config.ssid == NULL || config.pass == NULL) {
         server.send(400);
         return;
     }
+    save_config(prefs, config);
 
-    prefs.putString(PREFS_KEY_SSID, ssid);
-    prefs.putString(PREFS_KEY_PASSWORD, password);
-    prefs.putBool(PREFS_KEY_LOW_TRIGGER_RELAY, low_level_relay);
     String deviceSecret = deviceSecretStore.getDeviceSecret();
 
     server.send(200, CONTENT_TYPE_TEXT, "Setup complete. Restarting in 5 seconds | Device Secret: " + deviceSecret);
@@ -100,18 +94,20 @@ void handleSetup() {
 /// ROUTING SETUP
 
 void setup_sta_routing() {
-    server.on("/", handleHealthCheck);
-    server.on("/device", handleDeviceInformation);
-    server.on("/config", handleConfig);
-    server.on("/opendoor", handleOpenDoor);
-    server.on("/reset", handleReset);
+    server.on("/", HTTP_GET, handleHealthCheck);
+    server.on("/device", HTTP_GET, handleDeviceInformation);
+    server.on("/config", HTTP_GET, handleConfig);
+    server.on("/opendoor", HTTP_POST, handleOpenDoor);
+    server.on("/reset", HTTP_GET, handleReset);
+
+    server.on("/setup", HTTP_POST, handleSetup);
 
     server.collectHeaders(EXPECTED_HEADERS, sizeof(EXPECTED_HEADERS));
     server.begin();
 }
 
 void setup_ap_routing() {
-    server.on("/setup", handleSetup);
+    server.on("/setup", HTTP_POST, handleSetup);
     server.begin();
 }
 
@@ -127,8 +123,9 @@ void setupBoard() {
     pinMode(LED_BLUE, OUTPUT);
     pinMode(DOOR_OPENER_PIN, OUTPUT);
 
-    low_level_relay = prefs.getBool(PREFS_KEY_LOW_TRIGGER_RELAY);
-    if (low_level_relay) {
+    config = get_config(prefs);
+
+    if (config.low_trigger_relay) {
         Serial.println("Setting up for low trigger relay");
         digitalWrite(DOOR_OPENER_PIN, HIGH);
     }

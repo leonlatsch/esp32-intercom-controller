@@ -2,6 +2,7 @@
 #define WiFiManager_H
 
 #include "PrefsWrapper.h"
+#include <WiFi.h>
 
 extern const char *PREFS_KEY_SSID;
 extern const char *PREFS_KEY_PASSWORD;
