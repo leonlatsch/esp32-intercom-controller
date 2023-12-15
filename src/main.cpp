@@ -1,6 +1,7 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <Preferences.h>
+#include <Update.h>
 
 #include "util/uuid/uuid.h"
 #include "util/JsonHelper.h"
@@ -27,9 +28,13 @@ DeviceSecretStore deviceSecretStore(prefs);
 
 /// HTTP STA
 
-void securedEndpoint(std::function<void(void)> handler) {
+bool requestIsAuthorized() {
     String sentSecret = server.header(SECTER_HEADER_NAME);
-    if (deviceSecretStore.getDeviceSecret() == sentSecret) {
+    return deviceSecretStore.getDeviceSecret() == sentSecret;
+}
+
+void securedEndpoint(std::function<void(void)> handler) {
+    if (requestIsAuthorized()) {
         handler();
     } else {
         server.send(403);
@@ -71,6 +76,36 @@ void handleReset() {
     ESP.restart();
 }
 
+void handleUpdateResponse() {
+    server.sendHeader("Connection", "close");
+    server.send(200, CONTENT_TYPE_TEXT, (Update.hasError()) ? "FAIL\n" : "SUCCESS\n");
+    ESP.restart();
+}
+
+void handleUpdate() {
+    HTTPUpload& upload = server.upload();
+    if (upload.status == UPLOAD_FILE_START && requestIsAuthorized()) {
+        Serial.printf("Update: %s\n", upload.filename.c_str());
+        if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+            Update.printError(Serial);
+        }
+    } else if (upload.status == UPLOAD_FILE_WRITE) {
+        if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
+            Update.printError(Serial);
+        }
+    } else if (upload.status == UPLOAD_FILE_END) {
+        if (Update.end(true)) {
+            Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
+        } else {
+            Update.printError(Serial);
+        }
+    } else {
+        Update.abort();
+        server.sendHeader("Connection", "close");
+        server.send(403);
+    }
+}
+
 /// HTTP AP
 
 void handleSetup() {
@@ -99,6 +134,7 @@ void setup_sta_routing() {
     server.on("/config", HTTP_GET, handleConfig);
     server.on("/opendoor", HTTP_POST, handleOpenDoor);
     server.on("/reset", HTTP_GET, handleReset);
+    server.on("/update", HTTP_POST, handleUpdateResponse, handleUpdate);
 
     server.on("/setup", HTTP_POST, handleSetup);
 

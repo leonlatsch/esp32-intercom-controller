@@ -29,13 +29,14 @@ POST http://192.168.4.1/setup
 ## API Endpoints
 
 **Operational Mode**
-| Endpoint      | Secured | Possible Responses | Purpose                |
-|---------------|---------|--------------------| -----------------------|
-| `/`           | no      | 200,               | Healthcheck            |
-| `/opendoor`   | yes     | 200, 403           | Open Door              |
-| `/config`     | yes     | 200, 403           | Get Configuration      |
-| `/reset`      | no      | 200                | Hardware reset         |
-| `/device`     | no      | 200                | Get device information |
+| Endpoint      | Secured | Possible Responses | Purpose                                    |
+|---------------|---------|--------------------| -------------------------------------------|
+| `/`           | no      | 200,               | Healthcheck                                |
+| `/opendoor`   | yes     | 200, 403           | Open Door                                  |
+| `/config`     | yes     | 200, 403           | Get Configuration                          |
+| `/reset`      | no      | 200                | Hardware reset                             |
+| `/device`     | no      | 200                | Get device information                     |
+| `/update`     | yes     | 200, 403           | Upload new firmware ota, use ota_upload.py |
 
 **Setup Modee**
 | Endpoint | Secured | Possible Responses |
