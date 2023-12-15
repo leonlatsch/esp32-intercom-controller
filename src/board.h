@@ -2,6 +2,7 @@
 #define BOARD_H
 
 #include <WString.h>
+#include "config.h"
 
 const int LED_BLUE = 2;
 const int DOOR_OPENER_PIN = 5;
