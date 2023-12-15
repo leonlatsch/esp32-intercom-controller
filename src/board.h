@@ -5,6 +5,7 @@
 
 const int LED_BLUE = 2;
 const int DOOR_OPENER_PIN = 5;
+const int DOORBELL_PIN = 15;
 
 extern const char* DEVICE_NAME;
 extern const char* DEVICE_MANUFACTURER;

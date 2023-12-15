@@ -34,6 +34,22 @@ bool PrefsWrapper::putBool(const char *key, bool value) {
     return res != 0;
 }
 
+int PrefsWrapper::getInt(const char *key) {
+    prefs.begin(PREFS_NAMESPACE, false);
+    int value = prefs.getInt(key);
+    prefs.end();
+
+    return value;
+}
+
+bool PrefsWrapper::putInt(const char *key, int value) {
+    prefs.begin(PREFS_NAMESPACE, false);
+    size_t res = prefs.putInt(key, value);
+    prefs.end();
+
+    return res != 0;
+}
+
 void PrefsWrapper::clear() {
     prefs.begin(PREFS_NAMESPACE, false);
     prefs.clear();

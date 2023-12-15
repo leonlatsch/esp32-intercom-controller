@@ -10,6 +10,7 @@
 #include "PrefsWrapper.h"
 #include "security/DeviceSecretStore.h"
 #include "config.h"
+#include "doorbell/mqtt.h"
 
 const char *CONTENT_TYPE_TEXT = "text/text";
 const char *CONTENT_TYPE_JSON = "application/json";
@@ -158,6 +159,7 @@ void setupBoard() {
     // Pins
     pinMode(LED_BLUE, OUTPUT);
     pinMode(DOOR_OPENER_PIN, OUTPUT);
+    pinMode(DOORBELL_PIN, INPUT);
 
     config = get_config(prefs);
 
@@ -182,8 +184,20 @@ void setup() {
     } else if (mode == WIFI_AP) {
         setup_ap_routing();
     }
+    setup_mqtt(config);
+    Serial.println("Setup complete. Starting API WebServer");
 }
+
+long previusMillis = 0L;
 
 void loop() {
     server.handleClient();
+
+    if (digitalRead(DOORBELL_PIN) == HIGH) {
+        long currentMillis = millis();
+        if (currentMillis - previusMillis >= 5000L) {
+            send_doorbell_event();
+            previusMillis = currentMillis;
+        }
+    }
 }

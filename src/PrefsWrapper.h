@@ -16,6 +16,8 @@ class PrefsWrapper {
         bool getBool(const char *key);
         bool putString(const char *key, String value);
         bool putBool(const char *key, bool value);
+        int getInt(const char *key);
+        bool putInt(const char *key, int value);
         void clear();
 };
 
