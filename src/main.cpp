@@ -22,6 +22,7 @@ t_config config;
 
 const int PORT = 80;
 WebServer server(PORT);
+MQTTConnection mqtt = MQTTConnection();
 
 PrefsWrapper prefs = PrefsWrapper();
 WiFiManager wifiManager(prefs);
@@ -148,35 +149,11 @@ void setup_ap_routing() {
     server.begin();
 }
 
-/// GENERAL SETUP
-
-void setupBoard() {
-    // Serial
-    Serial.begin(9600);
-    while (!Serial);
-    Serial.println();
-
-    // Pins
-    pinMode(LED_BLUE, OUTPUT);
-    pinMode(DOOR_OPENER_PIN, OUTPUT);
-    pinMode(DOORBELL_PIN, INPUT);
-
-    config = get_config(prefs);
-
-    if (config.low_trigger_relay) {
-        Serial.println("Setting up for low trigger relay");
-        digitalWrite(DOOR_OPENER_PIN, HIGH);
-    }
-
-    Serial.println(deviceSecretStore.getDeviceSecret());
-
-    delay(100);
-}
-
 /// LIFECYCLE METHODS
 
 void setup() {
-    setupBoard();
+    config = get_config(prefs);
+    setup_board(config);
 
     wifi_mode_t mode = wifiManager.setup_wifi();
     if (mode == WIFI_STA) {
@@ -184,20 +161,14 @@ void setup() {
     } else if (mode == WIFI_AP) {
         setup_ap_routing();
     }
-    setup_mqtt(config);
+
+    mqtt.setup(config);
+
+    Serial.println(deviceSecretStore.getDeviceSecret());
     Serial.println("Setup complete. Starting API WebServer");
 }
 
-long previusMillis = 0L;
-
 void loop() {
     server.handleClient();
-
-    if (digitalRead(DOORBELL_PIN) == HIGH) {
-        long currentMillis = millis();
-        if (currentMillis - previusMillis >= 5000L) {
-            send_doorbell_event();
-            previusMillis = currentMillis;
-        }
-    }
+    mqtt.handle_doorbell_sensor();
 }

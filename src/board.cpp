@@ -2,6 +2,7 @@
 
 #include "board.h"
 #include <WiFi.h>
+#include "config.h"
 
 const char* DEVICE_NAME = "ESP32 Intercom Controller V1 Prototype";
 const char* DEVICE_MANUFACTURER = "Techguyz";
@@ -22,6 +23,23 @@ void led_on() {
 
 void led_off() {
     digitalWrite(LED_BLUE, LOW);
+}
+
+void setup_board(t_config config) {
+    // Serial
+    Serial.begin(9600);
+    while (!Serial);
+    Serial.println();
+
+    // Pins
+    pinMode(LED_BLUE, OUTPUT);
+    pinMode(DOOR_OPENER_PIN, OUTPUT);
+    pinMode(DOORBELL_PIN, INPUT);
+
+    if (config.low_trigger_relay) {
+        Serial.println("Setting up for low trigger relay");
+        digitalWrite(DOOR_OPENER_PIN, HIGH);
+    }
 }
 
 t_device_info get_device_information() {

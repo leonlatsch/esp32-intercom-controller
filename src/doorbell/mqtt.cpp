@@ -1,6 +1,7 @@
 #include "mqtt.h"
 #include <PubSubClient.h>
 #include <WiFi.h>
+#include "board.h"
 
 WiFiClient wifiClient;
 PubSubClient client(wifiClient);
@@ -12,7 +13,7 @@ const char *PREFS_KEY_MQTT_PASS = "MQTTPASS";
 
 const char *topic = "home/esp32-icc/doorbell";
 
-void setup_mqtt(t_config config) {
+void MQTTConnection::setup(t_config config) {
     if (config.mqtt_broker.isEmpty() || config.mqtt_port == 0 || config.mqtt_user.isEmpty() || config.mqtt_pass.isEmpty()) {
         Serial.println("MQTT Config insufficent. Skipping setup");
         return;
@@ -29,9 +30,19 @@ void setup_mqtt(t_config config) {
     }
 }
 
-void send_doorbell_event() {
+void MQTTConnection::send_doorbell_event() {
     if (client.connected()) {
         Serial.println("Sending ring event");
         client.publish(topic, "ring");
+    }
+}
+
+void MQTTConnection::handle_doorbell_sensor() {
+    if (digitalRead(DOORBELL_PIN) == HIGH) {
+        long currentMillis = millis();
+        if (currentMillis - previous_millis >= 5000L) {
+            send_doorbell_event();
+            previous_millis = currentMillis;
+        }
     }
 }

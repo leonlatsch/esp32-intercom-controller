@@ -17,6 +17,7 @@ struct t_device_info {
     String serial_number;
 };
 
+void setup_board(t_config config);
 void blink(int times);
 void led_on();
 void led_off();
