@@ -14,6 +14,7 @@ const char *topic = "home/esp32-icc/doorbell";
 
 void setup_mqtt(t_config config) {
     if (config.mqtt_broker.isEmpty() || config.mqtt_port == 0 || config.mqtt_user.isEmpty() || config.mqtt_pass.isEmpty()) {
+        Serial.println("MQTT Config insufficent. Skipping setup");
         return;
     }
 
@@ -23,9 +24,8 @@ void setup_mqtt(t_config config) {
     if (client.connect(client_id.c_str(), config.mqtt_user.c_str(), config.mqtt_pass.c_str())) {
         Serial.println("MQTT Connected to " + config.mqtt_broker);
     } else {
-        Serial.print("failed with state ");
+        Serial.print("MQTT connection failed with status: ");
         Serial.println(client.state());
-        delay(2000);
     }
 }
 
