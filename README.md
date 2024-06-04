@@ -1,10 +1,8 @@
 # ESP32 controller for an old school intercom
 
-***DEVELOPMENT IN PROGRESS***
+***DEVELOPMENT STOPPED IN FAVOR OF USING ESP HOME***
 
-## Additional components needed:
-- Some source of power
-- Relay Module
+*See finished project [here](https://github.com/leonlatsch/HT611-01_ESP32)*
 
 ## Setup
 1. Compile software with PlatformIO and Upload to ESP32
